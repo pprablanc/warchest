@@ -5,7 +5,10 @@ import logging as log
 from classes import Game, Player
 
 def main():
-    log.basicConfig(level=log.DEBUG)
+    log.basicConfig(level=log.INFO,
+                    filename='warchest.log',
+                    filemode='w')
+
     p1 = Player()
     p2 = Player()
     game = Game(p1, p2, draft=[0, 1, 2, 3, 4, 5, 6, 7])
