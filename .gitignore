@@ -129,7 +129,7 @@ dmypy.json
 .pyre/
 
 # Python test Notebook
-test.ipynb
+dev.ipynb
 
 # todo perso
 todo.org

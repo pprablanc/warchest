@@ -24,8 +24,18 @@ class Game(object):
         if draft == 'random':
             player1._initialize_player(self._draw_units_draft(), self.units)
             player2._initialize_player(self._draw_units_draft(), self.units)
-        else:
+        elif draft == 'manual':
             assert(draft == 'random'), "Manual draft not yet implemented"
+        elif type(draft) == list:
+            try:
+                draft_p1 = draft[0:4]
+                draft_p2 = draft[4:]
+            except IndexError as e:
+                print(f"draft variable should be list of 8 integers: {e}")
+
+            player1._initialize_player(draft_p1, self.units)
+            player2._initialize_player(draft_p2, self.units)
+
 
         # Set initiative
         self.initiative = np.random.randint(0, 1) # if 0: Player 2 has initiative
@@ -34,7 +44,7 @@ class Game(object):
 
     def proceed_game(self):
     #def next_turn ?(self, ):
-        while(1):
+        while 1:
             # TODO: Not finished yet. Continue when "action" methods are written in Player object
             if self.state == 'hand':
                 # check if any hand is empty
@@ -93,14 +103,14 @@ class Game(object):
 
     def _board_initialization(self):
         # TODO: x,y,z implementation of the board.
-        filename = '../resources/board.csv'
+        filename = 'resources/board.csv'
         try:
             self.board = pd.read_csv(filename, sep='\t')
         except:
             print("board.csv file was not found.")
 
     def _load_units(self):
-        filename = '../resources/units.json'
+        filename = 'resources/units.json'
         try:
             with open(filename, 'r') as f:
                 self.units = json.load(f)
@@ -111,7 +121,9 @@ class Game(object):
     def _draw_units_draft(self, n_units=4):
         units_draft = np.random.choice(self.available_units, n_units, replace=False)
         for i in units_draft:
-            self.available_units = np.delete(self.available_units, np.where(self.available_units==i))
+            self.available_units = np.delete(self.available_units,
+                                             np.where(self.available_units == i)
+                                             )
         return units_draft
 
 class Player(object):

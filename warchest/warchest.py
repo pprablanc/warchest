@@ -8,7 +8,7 @@ def main():
     log.basicConfig(level=log.DEBUG)
     p1 = Player()
     p2 = Player()
-    game = Game(p1, p2)
+    game = Game(p1, p2, draft=[0, 1, 2, 3, 4, 5, 6, 7])
     # print(f'bag: \n{p1.bag}')
     # print(f'supply: \n{p1.supply}')
 
@@ -16,10 +16,8 @@ def main():
     # debug tools
     import pandas as pd
     df = pd.DataFrame
-    print(f'supply: {df(p1.supply)}')
-    print(f'bag: {df(p1.bag)}')
-    print(f'hand: {df(p1.hand)}')
     game.proceed_game()
+
     import pdb; pdb.set_trace()
 
 if __name__ == '__main__':
