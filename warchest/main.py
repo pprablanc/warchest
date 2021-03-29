@@ -19,6 +19,7 @@ def main():
     print(f'supply: {df(p1.supply)}')
     print(f'bag: {df(p1.bag)}')
     print(f'hand: {df(p1.hand)}')
+    game.proceed_game()
     import pdb; pdb.set_trace()
 
 if __name__ == '__main__':

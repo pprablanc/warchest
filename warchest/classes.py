@@ -19,45 +19,66 @@ class Game(object):
         self._load_units()
 
         # Initialize player units, hands, bag, etc. ...
+        self.p1 = player1
+        self.p2 = player2
         if draft == 'random':
             player1._initialize_player(self._draw_units_draft(), self.units)
             player2._initialize_player(self._draw_units_draft(), self.units)
         else:
             assert(draft == 'random'), "Manual draft not yet implemented"
 
-        # # Set initiative
-        # self.initiative = random.randint(0, 1) # if 0: Player 2 has initiative
-        # self.player_turn = self.initiative
-        # self.state = 'hand'
+        # Set initiative
+        self.initiative = np.random.randint(0, 1) # if 0: Player 2 has initiative
+        self.player_turn = self.initiative
+        self.state = 'hand'
 
     def proceed_game(self):
     #def next_turn ?(self, ):
         while(1):
             # TODO: Not finished yet. Continue when "action" methods are written in Player object
             if self.state == 'hand':
-                pass
                 # check if any hand is empty
                 # if empty, move to bag
                 # else move to initiative
+                if self.p1.hand == [] or self.p2.hand == []:
+                    self.state = 'draw'
+                else:
+                    self.state = 'initiative'
 
             elif self.state == 'bag':
-                pass
                 # check if bag is empty
-                # if empty, fill the bag with discard
+                # if empty, fill the bag with discard and finish draw if necessary
                 # else move to initiative
+                if self.p1.bag == []:
+                    self.p1.discard2bag()
+                    self.state = 'draw'
+                elif self.p2.bag == []:
+                    self.p2.discard2bag()
+                    self.state = 'draw'
+                else:
+                    self.state = 'draw'
 
             elif self.state == 'initiative':
                 self.player_turn = self.initiative
                 self.state = 'play'
 
             elif self.state == 'draw':
-                if self.p1.draw():
-                    self.state = 'play'
+                # Draw from state hand (empty hand)
+                # Or draw when incomplete hand
+                if self.p1.hand == []:
+                    if self.p1.draw_bag_multiple():
+                        self.state = 'bag'
+                elif self.p2.hand == []:
+                    if self.p2.draw_bag_multiple():
+                        self.state = 'bag'
                 else:
-                    self.state = ''
+                    self.state = 'play'
 
             elif self.state == 'play':
+
+                print('Play action')
                 self.state = 'win'
+
                 # turn is played outside this module
                 return self.player_turn
 
@@ -122,25 +143,27 @@ class Player(object):
         assert(self.bag.empty())
         self.bag = self.discard[:]
 
-    def draw(self, previous_n_coins=0):
+    def draw_bag_multiple(self):
         n_coins = len(self.bag)
-        if n_coins >= 3:
-            self.hand = self.bag.sample(3)
+        if self.hand:
+            self.draw_bag(3-len(self.hand))
             return 1
-        elif previous_n_coins:
-            missing_coins = self.bag.sample(3-previous_n_coins)
-            self.hand = self.bag.append(missing_coins, ingore_index=True)
+        elif n_coins >= 3:
+            self.draw_bag(3)
             return 1
         else:
-            self.hand = self.bag.sample(n_coins)
+            self.draw_bag(n_coins)
             return 0
 
     def draw_supply(self, unit):
-        self.supply.remove(unit)
         self.discard.append(unit)
+        self.supply.remove(unit)
 
-    def draw_bag(self):
-        i = np.random.randint(len(self.bag)-1)
+    def draw_bag(self, n_coins):
+        coins = list(np.random.choice(self.bag, n_coins, replace=False))
+        for c in coins:
+            self.hand.append(c)
+            self.bag.remove(c)
 
     def recruit(self, id):
         pass
