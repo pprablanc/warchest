@@ -9,8 +9,8 @@ def main():
                     filename='warchest.log',
                     filemode='w')
 
-    p1 = Player()
-    p2 = Player()
+    p1 = Player('White')
+    p2 = Player('Black')
     game = Game(p1, p2, draft=[0, 1, 2, 3, 4, 5, 6, 7])
     # print(f'bag: \n{p1.bag}')
     # print(f'supply: \n{p1.supply}')
