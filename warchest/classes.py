@@ -8,14 +8,12 @@ import numpy as np
 
 class Game(object):
 
-    global PLAYER_1
-    global PLAYER_2
-    PLAYER_1 = 0
-    PLAYER_2 = 1
 
     def __init__(self, player1, player2, draft='random'):
         # Board initialization
-        self.board = {(x-3, y-3, x-y) for x in range(7) for y in range(7) if abs(x-y) <=3}
+        self.board = [(x-3, y-3, x-y) for x in range(7) for y in range(7) if abs(x-y) <=3]
+        self.PLAYER_1 = 0
+        self.PLAYER_2 = 1
 
         # load data
         self._load_units()
@@ -23,13 +21,12 @@ class Game(object):
 
 
         # Initialize player bases, units, hands, bag, etc. ...
-        self.p1 = player1
-        self.p1.add_base(self.bases_map[:2])
-        self.p2 = player2
-        self.p2.add_base(self.bases_map[-2:])
+        self.p = [player1, player2]
+        self.p[self.PLAYER_1].add_base(self.bases_map[:2])
+        self.p[self.PLAYER_2].add_base(self.bases_map[-2:])
         if draft == 'random':
-            self.p1._initialize_player(self._draw_units_draft(), self.units)
-            self.p2._initialize_player(self._draw_units_draft(), self.units)
+            self.p[self.PLAYER_1]._initialize_player(self._draw_units_draft(), self.units)
+            self.p[self.PLAYER_2]._initialize_player(self._draw_units_draft(), self.units)
         elif draft == 'manual':
             assert(draft == 'random'), "Manual draft not yet implemented"
         elif type(draft) == list:
@@ -39,72 +36,76 @@ class Game(object):
             except IndexError as e:
                 print(f"draft variable should be list of 8 integers: {e}")
 
-            self.p1._initialize_player(draft_p1, self.units)
-            self.p2._initialize_player(draft_p2, self.units)
+            self.p[self.PLAYER_1]._initialize_player(draft_p1, self.units)
+            self.p[self.PLAYER_2]._initialize_player(draft_p2, self.units)
 
 
 
         # Set initiative
-        self.player_turn = np.random.choice([PLAYER_1, PLAYER_2])
-        self.p1.init_available = self.player_turn != PLAYER_1
-        self.p2.init_available = self.player_turn != PLAYER_2
-        self.p1.draw_bag_end_turn()
-        self.p2.draw_bag_end_turn()
-
+        self.player_turn = np.random.choice([self.PLAYER_1, self.PLAYER_2])
+        self.p[self.PLAYER_1].init_available = not self.player_turn
+        self.p[self.PLAYER_2].init_available = self.player_turn
+        self.p[self.PLAYER_1].draw_bag_end_turn()
+        self.p[self.PLAYER_2].draw_bag_end_turn()
+        self.action_todo = 1
+        self.initiative = 0
 
 
     def proceed_game(self):
-        count = 0
-        while count < 10:
 
 
-            # log.info(self.player_turn)
-            # log.info(self.initiative)
-            if self.player_turn == PLAYER_1:
-                log.info(f'player {self.p1.name}')
-                ##########################################
-                ### This part will be handled by agent ###
-                ##########################################
-                self.p1.get_open_moves()
-                self.p1.make_move()
-                if len(self.p1.bases) > 5:
-                    log.info('Player 1 win the game.')
-                    break
-                ##########################################
-                ##########################################
-                ##########################################
-                # Draw 1st player
-                if self.p1.hand == []:
-                    self.p1.draw_bag_end_turn()
-                    if not self.p2.init_available and len(self.p2.hand) == 3:
-                        self.p1.init_available = 1
-                        self.player_turn = not self.player_turn
-                self.render(self.p1)
-            else:
-                ##########################################
-                ### This part will be handled by agent ###
-                ##########################################
-                log.info(f'player {self.p2.name}')
-                self.p2.get_open_moves()
-                self.p2.make_move()
-                if len(self.p2.bases) > 5:
-                    log.info('Player 2 win the game.')
-                    break
-                ##########################################
-                ##########################################
-                ##########################################
-                # Draw 2nd player
-                if self.p2.hand == []:
-                    self.p2.draw_bag_end_turn()
-                    if not self.p1.init_available and len(self.p1.hand) == 3:
-                        self.p2.init_available = 1
-                        self.player_turn = not self.player_turn
-                self.render(self.p2)
-            self.player_turn = not self.player_turn
+        if self.action_todo:
+            self.action_todo = 0
+            return self.PLAYER_1
+        else:
+            self.action_todo = 1
+        # Draw 1st player
+            if self.p[self.player_turn].hand == []:
+                self.p[self.player_turn].draw_bag_end_turn()
+                change_init = not self.p[self.player_turn].init_available \
+                    and not self.p[not self.player_turn].init_available
+                if change_init and len(self.p[not self.player_turn].hand) == 3:
+                    self.p[not self.player_turn].init_available = 1
+                    self.player_turn = not self.player_turn
 
-            log.info(f'hand p1: {len(self.p1.hand)}')
-            log.info(f'hand p2: {len(self.p2.hand)}')
-            count += 1
+
+
+
+
+
+
+
+
+
+        # if self.player_turn == self.PLAYER_1:
+        #     if self.action_todo:
+        #         self.action_todo = 0
+        #         return 0
+        #     else:
+        #         self.action_todo = 1
+        #     # Draw 1st player
+        #         if self.p[self.PLAYER_1].hand == []:
+        #             self.p[self.PLAYER_1].draw_bag_end_turn()
+        #             if not self.p[self.PLAYER_2].init_available and len(self.p[self.PLAYER_2].hand) == 3:
+        #                 log.info('P1: change turn')
+        #                 self.p[self.PLAYER_2].init_available = 1
+        #                 self.player_turn = not self.player_turn
+        # else:
+        #     if self.action_todo:
+        #         self.action_todo = 0
+        #         return 0
+        #     else:
+        #         self.action_todo = 1
+        #     # Draw 2nd player
+        #         if self.p[self.PLAYER_2].hand == []:
+        #             self.p[self.PLAYER_2].draw_bag_end_turn()
+        #             if not self.p[self.PLAYER_1].init_available and len(self.p[self.PLAYER_1].hand) == 3:
+        #                 log.info('P2: change turn')
+        #                 self.p[self.PLAYER_1].init_available = 1
+        #                 self.player_turn = not self.player_turn
+
+        self.player_turn = not self.player_turn
+
 
 
 
@@ -254,7 +255,7 @@ class Player(object):
         # Add list of pass possibilities
         self.open_moves = [(self.pass_move, coin) for coin in self.hand]
 
-        # # Add list of initiative possibilities
+        # Add list of initiative possibilities
         if self.init_available:
             init_moves = [(self.take_initiative, coin) for coin in self.hand]
             self.open_moves = self.open_moves + init_moves

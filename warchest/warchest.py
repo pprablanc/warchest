@@ -9,19 +9,37 @@ def main():
                     filename='warchest.log',
                     filemode='w')
 
-    p1 = Player('White')
-    p2 = Player('Black')
+    p1 = Player('P1')
+    p2 = Player('P2')
     game = Game(p1, p2, draft=[0, 1, 2, 3, 4, 5, 6, 7])
-    # print(f'bag: \n{p1.bag}')
-    # print(f'supply: \n{p1.supply}')
+    # print(f'bag: \n{p[PLAYER_1]bag}')
+    # print(f'supply: \n{p[PLAYER_1]supply}')
 
 
-    # debug tools
-    import pandas as pd
-    df = pd.DataFrame
-    game.proceed_game()
 
-    import pdb; pdb.set_trace()
+    count = 0
+    while count < 40:
+        game.proceed_game()
+        if game.action_todo:
+            game.render(game.p[game.player_turn])
+            log.info(f'player {game.p[game.player_turn].name}')
+            game.p[game.player_turn].get_open_moves()
+            game.p[game.player_turn].make_move() #random move
+            if len(game.p[game.player_turn].bases) > 5:
+                log.info('Player {game.player_turn} win the game.')
+                break
+
+        count += 1
+
+
+
+
+
+
+
+
+
+    # import pdb; pdb.set_trace()
 
 if __name__ == '__main__':
     main()
