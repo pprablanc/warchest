@@ -2,7 +2,9 @@
 
 import logging as log
 
-from classes import Game, Player
+from game import Game
+from player import Player
+# from classes import Game, Player
 
 def main():
     log.basicConfig(level=log.INFO,
@@ -19,15 +21,14 @@ def main():
 
     count = 0
     while count < 40:
-        game.proceed_game()
         if game.action_todo:
             game.render(game.p[game.player_turn])
-            log.info(f'player {game.p[game.player_turn].name}')
             game.p[game.player_turn].get_open_moves()
             game.p[game.player_turn].make_move() #random move
             if len(game.p[game.player_turn].bases) > 5:
                 log.info('Player {game.player_turn} win the game.')
                 break
+        game.proceed_game()
 
         count += 1
 
