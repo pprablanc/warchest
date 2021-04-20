@@ -17,7 +17,7 @@ class Player(object):
         self.open_moves= []
         self.init_available = 0
 
-    def _initialize_player(self, unit_list, unit_dictionary):
+    def initialize_player(self, unit_list, unit_dictionary):
         self.unit_dictionary = unit_dictionary
         royal_seal_coin = {'id': 16,
                       'name': 'Royal seal coin',
