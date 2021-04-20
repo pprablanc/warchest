@@ -9,12 +9,12 @@ class Player(object):
         self.unit_draft = []
         self.hand = []
         self.supply = []
-        self.discard = []
+        self.discard = Discard()
         self.eliminated = []
         self.bag = []
         self.bases = []
         self.flag_partial_hand = 0
-        self.open_moves= []
+        self.open_moves = []
         self.init_available = 0
 
     def initialize_player(self, unit_list, unit_dictionary):
@@ -42,8 +42,7 @@ class Player(object):
         self.bases.remove(base)
 
     def discard2bag(self):
-        self.bag = self.bag + self.discard
-        self.discard = []
+        self.bag = self.bag + self.discard.empty()
 
     def draw_bag_end_turn(self):
         n_coins = len(self.bag)
@@ -63,11 +62,12 @@ class Player(object):
                 self.flag_partial_hand = 0
             else:
                 self.flag_partial_hand = 1
-        else:
+        elif self.bag == []:
             self.discard2bag()
 
 
     def draw_bag(self, n_coins):
+        # import pdb; pdb.set_trace()
         coins = list(np.random.choice(self.bag, n_coins, replace=False))
         for c in coins:
             self.hand.append(c)
@@ -77,21 +77,25 @@ class Player(object):
     ### Actions modules ###
     #######################
 
-    def recruit(self, coin):
-        # TODO: add mercenary exception
-        self.hand.remove(coin)
-        self.discard.append(coin)
-        self.supply.remove(coin)
 
 
     def pass_move(self, coin):
         self.hand.remove(coin)
-        self.discard.append(coin)
+        self.discard.append(coin, masked=True)
 
     def take_initiative(self, coin):
         self.hand.remove(coin)
+        self.discard.append(coin, masked=True)
         self.init_available = 0
-        return 1
+
+    def recruit(self, args):
+        # TODO: add mercenary exception
+        r_coin = args[0]
+        h_coin = args[1]
+        self.hand.remove(h_coin)
+        self.discard.append(h_coin, masked=True)
+        self.supply.remove(r_coin)
+        self.discard.append(r_coin, masked=False)
 
     def deploy(self, coin, position):
         raise NotImplementedError("This action is not yet implemented")
@@ -104,11 +108,14 @@ class Player(object):
         if move_argmove == 'random':
             # Random moves for now with random coins
             i = np.random.choice(len(self.open_moves))
-            move, argmove = self.open_moves[i]
-            log.info('Player '+ self.name +': Action: '+ move.__name__ + ' with coin ' + self.unit_dictionary[argmove]['name'])
+            move = self.open_moves[i][0]
+            argmove = self.open_moves[i][1:]
+            # log.info('Player '+ self.name +': Action: '+ move.__name__ + ' with coin ' + self.unit_dictionary[argmove]['name'])
+            log.info('Player '+ self.name +': Action: '+ move.__name__)
             return move(argmove) # return 1 if the player take the initiative
         elif move_argmove in self.open_moves:
-            move, argmove = move_argmove
+            move = move_argmove[0]
+            argmove = move_argmove[1:]
             return move(argmove) # return 1 if the player take the initiative
         else:
             raise Exception(f'move {move_argmove[0]} with {move_argmove[1]} not available')
@@ -123,8 +130,10 @@ class Player(object):
             init_moves = [(self.take_initiative, coin) for coin in self.hand]
             self.open_moves = self.open_moves + init_moves
 
-        # if len(self.supply) > 0:
-        #     self.open_moves.append('recruit')
+        # Add list of recruit possibilities
+        if len(self.supply) > 0:
+            recruit_moves = [(self.recruit, s_coin, h_coin) for s_coin in self.supply for h_coin in self.hand]
+            self.open_moves = self.open_moves + (recruit_moves)
 
         # Filter based on hand and board state
         # After the basics, implement tactics
@@ -132,6 +141,23 @@ class Player(object):
         # Based on first filter, exhaustive search of legal actions
 
 
+class Discard(object):
+
+    def __init__(self):
+        self.discard = []
+
+    def append(self, coin, masked):
+        self.discard.append(
+            {
+                'id': coin,
+                'masked': masked
+            }
+        )
+
+    def empty(self):
+        ret = [coin['id'] for coin in self.discard]
+        self.discard = []
+        return ret
 
 
 

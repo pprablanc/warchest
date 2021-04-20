@@ -19,21 +19,6 @@ def main():
 
 
 
-    # count = 0
-    # while count < 40:
-    #     if game.action_todo:
-    #         game.render(game.p[game.player_turn])
-    #         game.p[game.player_turn].get_open_moves()
-    #         game.p[game.player_turn].make_move() #random move
-    #         if len(game.p[game.player_turn].bases) > 5:
-    #             log.info('Player {game.player_turn} win the game.')
-    #             break
-    #     game.proceed_game()
-
-    #     count += 1
-
-
-
     count = 0
     while count < 40:
         game.render(game.p[game.player_turn])

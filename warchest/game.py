@@ -24,9 +24,9 @@ class Game(object):
         """
         Initialize the game board
         """
-        self.board = [
-            (x - 3, y - 3, x - y) for x in range(7) for y in range(7) if abs(x - y) <= 3
-        ]
+        self.board = {
+            (x - 3, y - 3, x - y): None for x in range(7) for y in range(7) if abs(x - y) <= 3
+        }
 
     def _load_game_data(self):
         """
@@ -82,10 +82,10 @@ class Game(object):
         """
 
         if draft == "random":
-            self.p[self.PLAYER_1]._initialize_player(
+            self.p[self.PLAYER_1].initialize_player(
                 self._draw_units_draft(), self.units
             )
-            self.p[self.PLAYER_2]._initialize_player(
+            self.p[self.PLAYER_2].initialize_player(
                 self._draw_units_draft(), self.units
             )
         elif draft == "manual":
@@ -137,7 +137,7 @@ class Game(object):
         supply: {player.supply}
         bag: {player.bag}
         hand: {player.hand}
-        discard: {player.discard}
+        discard: {player.discard.discard}
         bases: {player.bases}
         """
         print(info_p)
