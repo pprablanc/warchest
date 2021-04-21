@@ -3,8 +3,10 @@ import logging as log
 
 class Player(object):
 
-    def __init__(self, name):
+    def __init__(self, name, board, playerId):
         self.name = name
+        self.board = board
+        self.playerId = playerId
         self.unit_dictionary = []
         self.unit_draft = []
         self.hand = []
@@ -16,13 +18,14 @@ class Player(object):
         self.flag_partial_hand = 0
         self.open_moves = []
         self.init_available = 0
+        self.royal_seal_coin = {'id': 16,
+                      'name': 'Royal seal coin',
+                      'quantity': 1}
+
 
     def initialize_player(self, unit_list, unit_dictionary):
         self.unit_dictionary = unit_dictionary
-        royal_seal_coin = {'id': 16,
-                      'name': 'Royal seal coin',
-                      'quantity': 1}
-        self.unit_dictionary.append(royal_seal_coin)
+        self.unit_dictionary.append(self.royal_seal_coin)
         self.unit_draft = unit_list
 
         for unit_id in self.unit_draft:
@@ -35,8 +38,10 @@ class Player(object):
 
         self.bag.append(16) # 16: Royal seal coin
 
-    def add_base(self, base):
-        [self.bases.append(b) for b in base]
+    def add_base(self, bases):
+        [self.bases.append(b) for b in bases]
+        for base in bases:
+            self.board.board[base]['base'] = self.playerId
 
     def remove_base(self, base):
         self.bases.remove(base)
@@ -79,12 +84,16 @@ class Player(object):
 
 
 
-    def pass_move(self, coin):
+    def pass_move(self, args):
+        coin = args[0]
         self.hand.remove(coin)
+        print('pass')
         self.discard.append(coin, masked=True)
 
-    def take_initiative(self, coin):
+    def take_initiative(self, args):
+        coin = args[0]
         self.hand.remove(coin)
+        print('take_init')
         self.discard.append(coin, masked=True)
         self.init_available = 0
 
@@ -92,14 +101,18 @@ class Player(object):
         # TODO: add mercenary exception
         r_coin = args[0]
         h_coin = args[1]
+        print('recruit')
         self.hand.remove(h_coin)
         self.discard.append(h_coin, masked=True)
         self.supply.remove(r_coin)
         self.discard.append(r_coin, masked=False)
 
-    def deploy(self, coin, position):
-        raise NotImplementedError("This action is not yet implemented")
-        # self.hand.remove(coin)
+    def deploy(self, args):
+        coin = args[0]
+        hexagon = args[1]
+        self.hand.remove(coin)
+        self.board.board[hexagon]['unitId'] = coin
+        self.board.board[hexagon]['number'] = self.board.board[hexagon]['number'] + 1
 
 
 
@@ -135,10 +148,15 @@ class Player(object):
             recruit_moves = [(self.recruit, s_coin, h_coin) for s_coin in self.supply for h_coin in self.hand]
             self.open_moves = self.open_moves + (recruit_moves)
 
-        # Filter based on hand and board state
-        # After the basics, implement tactics
+        # Add list of deploy possibilities
+        a_f_b = self.board.available_friendly_bases(self.playerId)
+        hand = [c for c in self.hand if c != self.royal_seal_coin]
+        if a_f_b:
+            deploy_moves = [(self.deploy, coin, hexagon) for coin in self.hand
+                            for hexagon in a_f_b if not self.board.check_unit_deployed(coin)]
+            self.open_moves = self.open_moves + deploy_moves
 
-        # Based on first filter, exhaustive search of legal actions
+
 
 
 class Discard(object):
