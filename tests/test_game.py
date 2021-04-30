@@ -47,7 +47,7 @@ class TestWarchest(object):
                 game.player[game.player_turn].pass_move,
                 game.player[game.player_turn].hand[0],
             )
-            game.player[game.player_turn].make_move(pass_move)  # random move
+            game.player[game.player_turn].make_move(pass_move)
             game.proceed_game()
             count += 1
 
@@ -60,7 +60,7 @@ class TestWarchest(object):
         """
         first_player = game.player_turn
         game.player[game.player_turn].get_open_moves()
-        game.player[game.player_turn].make_move()  # random move
+        game.player[game.player_turn].make_move()
         game.proceed_game()
 
         game.player[game.player_turn].get_open_moves()
@@ -68,23 +68,36 @@ class TestWarchest(object):
             game.player[game.player_turn].take_initiative,
             game.player[game.player_turn].hand[0],
         )
-        game.player[game.player_turn].make_move(init_move)  # random move
+        game.player[game.player_turn].make_move(init_move)
         game.proceed_game()
 
         count = 0
         while count < 4:
             game.player[game.player_turn].get_open_moves()
-            game.player[game.player_turn].make_move()  # random move
+            game.player[game.player_turn].make_move()
             game.proceed_game()
             count += 1
 
         assert first_player != game.player_turn
 
 
-    def test_recruit(self, game):
+    def recruit(self, game):
         """
         Assert that recruit move was handled properly:
             - transfer coin from hand to discard
             - add unit coin to discard
         """
-        assert 1 == 1
+        raise NotImplementedError
+
+    def deploy(self, game):
+        '''
+        Assert that unit is deployed
+        '''
+        raise NotImplementedError
+
+    def deploy_only_one(self, game):
+        '''
+        Assert that only one type of unit is deployed
+        on the board.
+        '''
+        raise NotImplementedError
