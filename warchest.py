@@ -16,7 +16,7 @@ def main():
 
 
     count = 0
-    while count < 300:
+    while True:
         # game.render(game.player[game.player_turn])
         game.player[game.player_turn].get_open_moves()
         game.player[game.player_turn].make_move() #random move
@@ -30,7 +30,6 @@ def main():
     print('count: '+str(count))
     print(game.board.get_base_count(0))
     print(game.board.get_base_count(1))
-    import pdb; pdb.set_trace()
 
 if __name__ == '__main__':
     main()

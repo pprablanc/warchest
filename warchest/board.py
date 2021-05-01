@@ -48,6 +48,12 @@ class Board(object):
     def get_base_count(self, playerId):
         return self.base_count[playerId]
 
+    def add_base(self, base, playerId):
+
+        self.bases[base] = playerId
+        if (self.board[base]['base'] != -1) and (self.board[base]['base'] != playerId):
+            self.dec_base_count(not playerId)
+        self.board[base]['base'] = playerId
 
     def available_hexagon(self, hexagon):
         if self.board[hexagon]['coinId']:
@@ -67,10 +73,6 @@ class Board(object):
 
 
 
-    def add_base(self, base, playerId):
-
-        self.bases[base] = playerId
-        self.board[base]['base'] = playerId
 
     def check_unit_deployed(self, coinId):
         '''

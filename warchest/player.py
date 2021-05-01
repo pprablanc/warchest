@@ -134,14 +134,12 @@ class Player(object):
         raise NotImplementedError
 
     def control(self, args):
-        print('CONTROL ---------------------------------')
         coin = args[0]
         hexagon = args[1]
+        print('control')
 
         self.board.add_base(hexagon, self.playerId)
         self.board.inc_base_count(self.playerId)
-        # TODO: supprimer dec_base adverse si elle est prise par l'adversaire
-
         self.hand2discard(coin, masked=False)
 
     def bolster(self, args):

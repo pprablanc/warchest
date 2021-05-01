@@ -124,7 +124,7 @@ class Game(object):
         bag: {player.bag}
         hand: {player.hand}
         discard: {player.discard.discard}
-        bases: {player.bases}
+        board: {self.board.board}
         """
         print(info_p)
 
