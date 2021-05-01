@@ -8,25 +8,33 @@ from warchest.board import Board
 
 
 class Game(object):
+    PLAYER_1 = 0
+    PLAYER_2 = 1
+
     def __init__(self, player_name_1, player_name_2, draft="random", first_player="random"):
         self.player_turn = None
         self.units = None
         self.available_units = None
         self.board = Board()
-        self.PLAYER_1 = 0
-        self.PLAYER_2 = 1
-        self.bases_map = None
 
-        player1 = Player(player_name_1, self.board, playerId=self.PLAYER_1)
-        player2 = Player(player_name_2, self.board, playerId=self.PLAYER_2)
+        # Instantiate players
+        player1 = Player(player_name_1, self.board, playerId=Game.PLAYER_1)
+        player2 = Player(player_name_2, self.board, playerId=Game.PLAYER_2)
         self.player = [player1, player2]
-        self.player[self.PLAYER_1].add_base(self.board.bases[:2])
-        self.player[self.PLAYER_2].add_base(self.board.bases[-2:])
+
+        # Initialize starting bases
+        self.board.add_base((-3,-1,-2), Game.PLAYER_1)
+        self.board.add_base((-2,-3,1), Game.PLAYER_1)
+        self.board.inc_base_count(Game.PLAYER_1, 2)
+        self.board.add_base((3,1,2), Game.PLAYER_2)
+        self.board.add_base((2,3,-1), Game.PLAYER_2)
+        self.board.inc_base_count(Game.PLAYER_2, 2)
+
         self._load_units()
         self._make_draft(draft=draft)
         self._set_initiative(first_player=first_player)
-        self.player[self.PLAYER_1].draw_bag_end_turn()
-        self.player[self.PLAYER_2].draw_bag_end_turn()
+        self.player[Game.PLAYER_1].draw_bag_end_turn()
+        self.player[Game.PLAYER_2].draw_bag_end_turn()
 
 
     def proceed_game(self):
@@ -63,10 +71,10 @@ class Game(object):
         """
 
         if draft == "random":
-            self.player[self.PLAYER_1].initialize_player(
+            self.player[Game.PLAYER_1].initialize_player(
                 self._draw_units_draft(), self.units
             )
-            self.player[self.PLAYER_2].initialize_player(
+            self.player[Game.PLAYER_2].initialize_player(
                 self._draw_units_draft(), self.units
             )
         elif draft == "manual":
@@ -78,8 +86,8 @@ class Game(object):
             except IndexError as e:
                 print(f"draft variable should be list of 8 integers: {e}")
 
-            self.player[self.PLAYER_1].initialize_player(draft_p1, self.units)
-            self.player[self.PLAYER_2].initialize_player(draft_p2, self.units)
+            self.player[Game.PLAYER_1].initialize_player(draft_p1, self.units)
+            self.player[Game.PLAYER_2].initialize_player(draft_p2, self.units)
 
     def _draw_units_draft(self, n_units=4):
         units_draft = np.random.choice(self.available_units, n_units, replace=False)
@@ -95,11 +103,11 @@ class Game(object):
         """
 
         if first_player == "random":
-            self.player_turn = np.random.choice([self.PLAYER_1, self.PLAYER_2])
+            self.player_turn = np.random.choice([Game.PLAYER_1, Game.PLAYER_2])
         elif isinstance(first_player, int):
-            if first_player not in [self.PLAYER_1, self.PLAYER_2]:
+            if first_player not in [Game.PLAYER_1, Game.PLAYER_2]:
                 raise Exception(
-                    f"first_player value not in [{self.PLAYER_1}, {self.PLAYER_2}]"
+                    f"first_player value not in [{Game.PLAYER_1}, {Game.PLAYER_2}]"
                 )
             else:
                 self.player_turn = first_player

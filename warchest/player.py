@@ -15,7 +15,6 @@ class Player(object):
         self.discard = Discard()
         self.eliminated = []
         self.bag = []
-        self.bases = []
 
         self.flag_partial_hand = 0
         self.open_moves = []
@@ -40,13 +39,7 @@ class Player(object):
 
         self.bag.append(16) # 16: Royal seal coin
 
-    def add_base(self, bases):
-        [self.bases.append(b) for b in bases]
-        for base in bases:
-            self.board.board[base]['base'] = self.playerId
 
-    def remove_base(self, base):
-        self.bases.remove(base)
 
     def discard2bag(self):
         self.bag = self.bag + self.discard.empty()
@@ -84,11 +77,10 @@ class Player(object):
             self.hand.append(c)
             self.bag.remove(c)
 
+
     #######################
     ### Actions modules ###
     #######################
-
-
 
     def pass_move(self, args):
         coin = args[0]
@@ -111,7 +103,6 @@ class Player(object):
         self.supply.remove(r_coin)
 
     def deploy(self, args):
-        # TODO: add footman exception (in the board ?)
         coin = args[0]
         hexagon = args[1]
         print('deploy')
@@ -121,20 +112,21 @@ class Player(object):
         self.board.units_deployed[coin] = hexagon
 
     def move_unit(self, args):
+        # TODO: add footman exception move 2 units
         coin = args[0]
         hexagon_source = args[1]
         hexagon_target = args[2]
         print('move')
 
-        # Maj board
+        # Update board
         self.board.board[hexagon_target]['coinId'] = self.board.board[hexagon_source]['coinId']
         self.board.board[hexagon_target]['number'] = self.board.board[hexagon_source]['number']
         self.board.board[hexagon_source]['coinId'] = None
         self.board.board[hexagon_source]['number'] = 0
 
-        # Maj quick access deployed units
+        # Update quick access deployed units
         self.board.units_deployed[coin] = hexagon_target
-        print(self.board.units_deployed)
+        # print(self.board.units_deployed)
 
         self.hand2discard(coin, masked=False)
 
@@ -142,28 +134,18 @@ class Player(object):
         raise NotImplementedError
 
     def control(self, args):
-        raise NotImplementedError
+        print('CONTROL ---------------------------------')
+        coin = args[0]
+        hexagon = args[1]
+
+        self.board.add_base(hexagon, self.playerId)
+        self.board.inc_base_count(self.playerId)
+        # TODO: supprimer dec_base adverse si elle est prise par l'adversaire
+
+        self.hand2discard(coin, masked=False)
 
     def bolster(self, args):
         raise NotImplementedError
-
-
-    def make_move(self, move_argmove='random'):
-
-        if move_argmove == 'random':
-            # Random moves for now with random coins
-            i = np.random.choice(len(self.open_moves))
-            move = self.open_moves[i][0]
-            argmove = self.open_moves[i][1:]
-            # log.info('Player '+ self.name +': Action: '+ move.__name__ + ' with coin ' + self.unit_dictionary[argmove]['name'])
-            log.info('Player '+ self.name +': Action: '+ move.__name__)
-            return move(argmove) # return 1 if the player take the initiative
-        elif move_argmove in self.open_moves:
-            move = move_argmove[0]
-            argmove = move_argmove[1:]
-            return move(argmove) # return 1 if the player take the initiative
-        else:
-            raise Exception(f'move {move_argmove[0]} with {move_argmove[1]} not available')
 
 
     ############################
@@ -199,6 +181,7 @@ class Player(object):
         '''
         Add list of deploy possibilities
         '''
+        # TODO: add footman exception (in the board ?)
         a_f_b = self.board.available_friendly_bases(self.playerId)
         hand = [c for c in self.hand if c != self.royal_seal_coin['coinId']]
         if a_f_b:
@@ -206,6 +189,11 @@ class Player(object):
                             for coin in hand
                             for hexagon in a_f_b
                             if not self.board.check_unit_deployed(coin)]
+            var_debug = [(coin, hexagon)
+                            for coin in hand
+                            for hexagon in a_f_b
+                            if not self.board.check_unit_deployed(coin)]
+
             self.open_moves = self.open_moves + deploy_moves
 
     def parse_move(self):
@@ -224,6 +212,20 @@ class Player(object):
                         move_moves = move_moves + tmp
         self.open_moves = self.open_moves + move_moves
 
+
+    def parse_control(self):
+        '''
+        Add list of control possibilities
+        '''
+        unit_hex_on_base = [(unitId, hexagon)for unitId, hexagon in self.board.units_deployed.items()
+                        if (hexagon in self.board.bases.keys())
+                        and (self.board.bases[hexagon] != self.playerId)
+                        and (unitId in self.hand)]
+
+        control_moves = [(self.control, elt[0], elt[1]) for elt in unit_hex_on_base]
+        self.open_moves = self.open_moves + control_moves
+
+
     def get_open_moves(self):
 
         self.parse_pass()
@@ -231,9 +233,25 @@ class Player(object):
         self.parse_recruit()
         self.parse_deploy()
         self.parse_move()
+        self.parse_control()
 
 
+    def make_move(self, move_argmove='random'):
 
+        if move_argmove == 'random':
+            # Random moves for now with random coins
+            i = np.random.choice(len(self.open_moves))
+            move = self.open_moves[i][0]
+            argmove = self.open_moves[i][1:]
+            # log.info('Player '+ self.name +': Action: '+ move.__name__ + ' with coin ' + self.unit_dictionary[argmove]['name'])
+            log.info('Player '+ self.name +': Action: '+ move.__name__)
+            return move(argmove) # return 1 if the player take the initiative
+        elif move_argmove in self.open_moves:
+            move = move_argmove[0]
+            argmove = move_argmove[1:]
+            return move(argmove) # return 1 if the player take the initiative
+        else:
+            raise Exception(f'move {move_argmove[0]} with {move_argmove[1]} not available')
 
 
 

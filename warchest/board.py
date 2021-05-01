@@ -10,7 +10,8 @@ class Board(object):
         self.board = {}
         self.units_deployed = {}
         self.hexagons = {}
-        self.bases = []
+        self.bases = {}
+        self.base_count = [0, 0]
         self._load_bases()
         self._load_board()
 
@@ -19,7 +20,7 @@ class Board(object):
         try:
             with open(filename_bases, 'r') as f:
                 bases = json.load(f)
-                self.bases= [tuple(base) for base in bases]
+                self.bases= {tuple(base): -1 for base in bases}
         except FileNotFoundError:
             print("bases.json file was not found.")
 
@@ -37,35 +38,49 @@ class Board(object):
         for hexagon in self.bases:
             self.board[hexagon]['base'] = -1
 
+
+    def inc_base_count(self, playerId, amount=1):
+        self.base_count[playerId] = self.base_count[playerId] + amount
+
+    def dec_base_count(self, playerId):
+        self.base_count[playerId] = self.base_count[playerId] - 1
+
+    def get_base_count(self, playerId):
+        return self.base_count[playerId]
+
+
     def available_hexagon(self, hexagon):
         if self.board[hexagon]['coinId']:
             return 0
         else:
             return hexagon
 
-    def available_friendly_bases(self, player):
+    def available_friendly_bases(self, playerId):
         '''
         Return list of available bases regarding a given player
         '''
-        return [base for base in self.bases
-                if (self.board[base]['base'] == player) and (self.board[base]['coinId'] is None)]
-
-    def friendly_units_deployed(self, player):
-        '''
-        Return list of friendly units deployed on the board
-        '''
+        res = [base for base, basePlayerId in self.bases.items()
+                if (basePlayerId == playerId)
+                and (self.board[base]['coinId'] is None)]
+        # print(res)
+        return res
 
 
+
+    def add_base(self, base, playerId):
+
+        self.bases[base] = playerId
+        self.board[base]['base'] = playerId
 
     def check_unit_deployed(self, coinId):
         '''
         Return 1 if unit is already deployed on the board
         '''
-        for u_deployed in self.units_deployed:
-            if u_deployed == coinId:
+
+        for unit in self.units_deployed.keys():
+            if unit == coinId:
                 return 1
-            else:
-                return 0
+        return 0
 
     def neighbors_1(self, hexagon):
         x, y, z = hexagon

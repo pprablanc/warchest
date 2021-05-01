@@ -27,7 +27,7 @@ class TestWarchest(object):
         # Test a manual draft (different than human manual draft)
         draft = [0, 1, 2, 3, 4, 5, 6, 7]
         game = Game(p1, p2, draft=draft)
-        assert game.player[game.PLAYER_1].unit_draft == [0, 1, 2, 3] and game.player[game.PLAYER_2].unit_draft == [4, 5, 6, 7]
+        assert game.player[Game.PLAYER_1].unit_draft == [0, 1, 2, 3] and game.player[Game.PLAYER_2].unit_draft == [4, 5, 6, 7]
 
     def test_board(self, game):
         # Test the length of board

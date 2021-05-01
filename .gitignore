@@ -131,6 +131,7 @@ dmypy.json
 # Python test Notebook
 dev.ipynb
 
-# todo perso
+# dev
 todo.org
 tactics.ods
+data_format.txt

@@ -16,17 +16,20 @@ def main():
 
 
     count = 0
-    while count < 200:
+    while count < 300:
         # game.render(game.player[game.player_turn])
         game.player[game.player_turn].get_open_moves()
         game.player[game.player_turn].make_move() #random move
-        if len(game.player[game.player_turn].bases) > 5:
+        if game.board.get_base_count(game.player_turn) > 5:
             log.info('Player {game.player_turn} win the game.')
             break
         game.proceed_game()
         count += 1
     toc = time.perf_counter()
     print(toc - tic)
+    print('count: '+str(count))
+    print(game.board.get_base_count(0))
+    print(game.board.get_base_count(1))
     import pdb; pdb.set_trace()
 
 if __name__ == '__main__':
