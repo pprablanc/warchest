@@ -39,8 +39,6 @@ class Player(object):
 
         self.bag.append(16) # 16: Royal seal coin
 
-
-
     def discard2bag(self):
         self.bag = self.bag + self.discard.empty()
 

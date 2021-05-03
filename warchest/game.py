@@ -36,6 +36,33 @@ class Game(object):
         self.player[Game.PLAYER_1].draw_bag_end_turn()
         self.player[Game.PLAYER_2].draw_bag_end_turn()
 
+    def reset(self, draft="random", first_player="random"):
+        # Re-initialize available units
+        self.available_units = np.arange(len(self.units))
+        self.board = Board()
+
+        # Instantiate players
+        player1 = Player(self.player[Game.PLAYER_1].name, self.board, playerId=Game.PLAYER_1)
+        player2 = Player(self.player[Game.PLAYER_2].name, self.board, playerId=Game.PLAYER_2)
+        self.player = [player1, player2]
+
+        # Initialize starting bases
+        self.board.add_base((-3,-1,-2), Game.PLAYER_1)
+        self.board.add_base((-2,-3,1), Game.PLAYER_1)
+        self.board.inc_base_count(Game.PLAYER_1, 2)
+        self.board.add_base((3,1,2), Game.PLAYER_2)
+        self.board.add_base((2,3,-1), Game.PLAYER_2)
+        self.board.inc_base_count(Game.PLAYER_2, 2)
+
+        self._make_draft(draft=draft)
+        self._set_initiative(first_player=first_player)
+        self.player[Game.PLAYER_1].draw_bag_end_turn()
+        self.player[Game.PLAYER_2].draw_bag_end_turn()
+
+
+    def get_state(self):
+        pass
+
 
     def proceed_game(self):
         """
@@ -52,6 +79,12 @@ class Game(object):
                 self.player_turn = not self.player_turn
 
         self.player_turn = not self.player_turn
+
+    def who_win(self, playerId):
+        if self.board.get_base_count(playerId) > 5:
+            return playerId
+        else:
+            return -1
 
     def _load_units(self):
         """

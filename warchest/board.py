@@ -38,7 +38,6 @@ class Board(object):
         for hexagon in self.bases:
             self.board[hexagon]['base'] = -1
 
-
     def inc_base_count(self, playerId, amount=1):
         self.base_count[playerId] = self.base_count[playerId] + amount
 
@@ -54,6 +53,7 @@ class Board(object):
         if (self.board[base]['base'] != -1) and (self.board[base]['base'] != playerId):
             self.dec_base_count(not playerId)
         self.board[base]['base'] = playerId
+
 
     def available_hexagon(self, hexagon):
         if self.board[hexagon]['coinId']:
