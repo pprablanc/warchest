@@ -8,6 +8,7 @@ from warchest.board import Board
 
 
 class Game(object):
+    # Class variable
     PLAYER_1 = 0
     PLAYER_2 = 1
 
@@ -37,31 +38,40 @@ class Game(object):
         self.player[Game.PLAYER_2].draw_bag_end_turn()
 
     def reset(self, draft="random", first_player="random"):
-        # Re-initialize available units
-        self.available_units = np.arange(len(self.units))
-        self.board = Board()
+        self.__init__(draft, first_player)
 
-        # Instantiate players
-        player1 = Player(self.player[Game.PLAYER_1].name, self.board, playerId=Game.PLAYER_1)
-        player2 = Player(self.player[Game.PLAYER_2].name, self.board, playerId=Game.PLAYER_2)
-        self.player = [player1, player2]
+    def get_state_vector(self, playerId):
+        # TODO: Need optimisation
+        # Update state after each action instead of updating the whole
+        # state_vector
 
-        # Initialize starting bases
-        self.board.add_base((-3,-1,-2), Game.PLAYER_1)
-        self.board.add_base((-2,-3,1), Game.PLAYER_1)
-        self.board.inc_base_count(Game.PLAYER_1, 2)
-        self.board.add_base((3,1,2), Game.PLAYER_2)
-        self.board.add_base((2,3,-1), Game.PLAYER_2)
-        self.board.inc_base_count(Game.PLAYER_2, 2)
+        state_vector = []
+        # board vector: encode position + unitId + #units
+        for elt in self.board.board.values():
+            vec = 16*[0]
+            if elt['coinId'] is not None:
+                vec[elt['coinId']] = elt['coinId']
+            state_vector = state_vector + vec
 
-        self._make_draft(draft=draft)
-        self._set_initiative(first_player=first_player)
-        self.player[Game.PLAYER_1].draw_bag_end_turn()
-        self.player[Game.PLAYER_2].draw_bag_end_turn()
+        # bases vector
+        # discards vector
+        # supplies vector
+        # player_1 bag vector
+        # player_1 hand vector
+        # player_2 hand+bag vector
 
+        # for developpement
+        # print(self.state_vector)
+        return state_vector
 
-    def get_state(self):
-        pass
+    def get_action_vector(self, playerId):
+
+        self.player[playerId].get_action_vector()
+        return self.player[playerId].action_vector
+
+    def get_state_action_vector(self, playerId):
+        state_action_vector = self.get_state_vector(playerId) + self.get_action_vector(playerId)
+        return state_action_vector
 
 
     def proceed_game(self):

@@ -33,8 +33,8 @@ class Board(object):
         except FileNotFoundError:
             print("board.json file was not found.")
 
-        for hexagon in self.hexagons:
-            self.board[hexagon] = {'coinId': None, 'number': 0, 'base': None}
+        for hex_id, hexagon in enumerate(self.hexagons):
+            self.board[hexagon] = {'coinId': None, 'number': 0, 'base': None, 'hexId': hex_id}
         for hexagon in self.bases:
             self.board[hexagon]['base'] = -1
 

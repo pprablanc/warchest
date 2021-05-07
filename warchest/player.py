@@ -7,8 +7,10 @@ class Player(object):
         self.name = name
         self.board = board
         self.playerId = playerId
-        self.unit_dictionary = []
+        self.unit_index = []
         self.unit_draft = []
+        self.action_features_map = {}
+        self.action_vector = []
 
         self.hand = []
         self.supply = []
@@ -18,15 +20,24 @@ class Player(object):
 
         self.flag_partial_hand = 0
         self.open_moves = []
+        self.chosen_move = None
         self.init_available = 0
+        self.open_moves = []
         self.royal_seal_coin = {'coinId': 16,
                       'name': 'Royal seal coin',
                       'quantity': 1}
 
 
-    def initialize_player(self, unit_list, unit_dictionary):
-        self.unit_dictionary = unit_dictionary
-        self.unit_dictionary.append(self.royal_seal_coin)
+    def initialize_player(self, unit_list, unit_index):
+        self.set_unit_index(unit_index)
+        self.set_bag_supply(unit_list)
+        self.initialize_action_vector()
+
+    def set_unit_index(self, unit_index):
+        self.unit_index = unit_index[:]
+        self.unit_index.append(self.royal_seal_coin)
+
+    def set_bag_supply(self, unit_list):
         self.unit_draft = unit_list
 
         for unit_id in self.unit_draft:
@@ -34,10 +45,45 @@ class Player(object):
             self.bag.append(unit_id)
             self.bag.append(unit_id)
             # fill supply minus 2 card moved to the bag
-            for n in range(unit_dictionary[unit_id]['quantity']-2):
+            for _ in range(self.unit_index[unit_id]['quantity']-2):
                 self.supply.append(unit_id)
 
-        self.bag.append(16) # 16: Royal seal coin
+        self.bag.append(self.royal_seal_coin['coinId'])
+
+    def initialize_action_vector(self):
+        n_uniq_coins = len(self.unit_index)
+        n_units = n_uniq_coins - 1
+        n_bases = len(self.board.bases)
+        n_hexagons = len(self.board.board)
+
+        list_action_args = [
+            [self.pass_move, n_uniq_coins],
+            [self.recruit, n_units, n_uniq_coins],
+            [self.take_initiative, n_uniq_coins],
+            [self.deploy, n_units, n_bases],
+            [self.move_unit, n_units, n_hexagons, n_hexagons],
+            [self.control, n_units, n_hexagons]
+        ]
+
+        offset = 0
+        for elt in list_action_args:
+            action = elt[0]
+            self.action_features_map[action] = {
+                'offset': offset,
+                'args': elt[1:]
+            }
+            offset = offset + sum(elt[1:])
+
+        self.action_vector = offset * [0]
+
+    def get_action_vector(self):
+        self.action_vector = [0 for elt in self.action_vector]
+        action = self.chosen_move[0]
+        args = self.chosen_move[1:]
+        for arg in args:
+            offset = self.action_features_map[action]['offset']
+            arg = self.board.board[arg]['hexId'] if isinstance(arg, tuple) else arg
+            self.action_vector[offset+arg] = 1
 
     def discard2bag(self):
         self.bag = self.bag + self.discard.empty()
@@ -82,12 +128,12 @@ class Player(object):
 
     def pass_move(self, args):
         coin = args[0]
-        print('pass')
+        # print('pass')
         self.hand2discard(coin, masked=True)
 
     def take_initiative(self, args):
         coin = args[0]
-        print('take_init')
+        # print('take_init')
         self.hand2discard(coin, masked=True)
         self.init_available = 0
 
@@ -95,7 +141,7 @@ class Player(object):
         # TODO: add mercenary exception
         r_coin = args[0]
         h_coin = args[1]
-        print('recruit')
+        # print('recruit')
         self.hand2discard(h_coin, masked=True)
         self.discard.append(r_coin, masked=False)
         self.supply.remove(r_coin)
@@ -103,7 +149,7 @@ class Player(object):
     def deploy(self, args):
         coin = args[0]
         hexagon = args[1]
-        print('deploy')
+        # print('deploy')
         self.hand.remove(coin)
         self.board.board[hexagon]['coinId'] = coin
         self.board.board[hexagon]['number'] = self.board.board[hexagon]['number'] + 1
@@ -114,7 +160,7 @@ class Player(object):
         coin = args[0]
         hexagon_source = args[1]
         hexagon_target = args[2]
-        print('move')
+        # print('move')
 
         # Update board
         self.board.board[hexagon_target]['coinId'] = self.board.board[hexagon_source]['coinId']
@@ -124,7 +170,6 @@ class Player(object):
 
         # Update quick access deployed units
         self.board.units_deployed[coin] = hexagon_target
-        # print(self.board.units_deployed)
 
         self.hand2discard(coin, masked=False)
 
@@ -134,7 +179,7 @@ class Player(object):
     def control(self, args):
         coin = args[0]
         hexagon = args[1]
-        print('control')
+        # print('control')
 
         self.board.add_base(hexagon, self.playerId)
         self.board.inc_base_count(self.playerId)
@@ -153,7 +198,8 @@ class Player(object):
         '''
         Add list of pass possibilities
         '''
-        self.open_moves = [(self.pass_move, coin) for coin in self.hand]
+        pass_moves = [(self.pass_move, coin) for coin in self.hand]
+        self.open_moves = self.open_moves + pass_moves
 
     def parse_init(self):
         '''
@@ -171,7 +217,7 @@ class Player(object):
             recruit_moves = [(self.recruit, s_coin, h_coin)
                              for s_coin in self.supply
                              for h_coin in self.hand]
-            self.open_moves = self.open_moves + (recruit_moves)
+            self.open_moves = self.open_moves + recruit_moves
 
     def parse_deploy(self):
         '''
@@ -185,11 +231,6 @@ class Player(object):
                             for coin in hand
                             for hexagon in a_f_b
                             if not self.board.check_unit_deployed(coin)]
-            var_debug = [(coin, hexagon)
-                            for coin in hand
-                            for hexagon in a_f_b
-                            if not self.board.check_unit_deployed(coin)]
-
             self.open_moves = self.open_moves + deploy_moves
 
     def parse_move(self):
@@ -213,7 +254,7 @@ class Player(object):
         '''
         Add list of control possibilities
         '''
-        unit_hex_on_base = [(unitId, hexagon)for unitId, hexagon in self.board.units_deployed.items()
+        unit_hex_on_base = [(unitId, hexagon) for unitId, hexagon in self.board.units_deployed.items()
                         if (hexagon in self.board.bases.keys())
                         and (self.board.bases[hexagon] != self.playerId)
                         and (unitId in self.hand)]
@@ -223,6 +264,8 @@ class Player(object):
 
 
     def get_open_moves(self):
+
+        self.open_moves = []
 
         self.parse_pass()
         self.parse_init()
@@ -239,8 +282,9 @@ class Player(object):
             i = np.random.choice(len(self.open_moves))
             move = self.open_moves[i][0]
             argmove = self.open_moves[i][1:]
-            # log.info('Player '+ self.name +': Action: '+ move.__name__ + ' with coin ' + self.unit_dictionary[argmove]['name'])
+            # log.info('Player '+ self.name +': Action: '+ move.__name__ + ' with coin ' + self.unit_index[argmove]['name'])
             log.info('Player '+ self.name +': Action: '+ move.__name__)
+            self.chosen_move = self.open_moves[i]
             return move(argmove) # return 1 if the player take the initiative
         elif move_argmove in self.open_moves:
             move = move_argmove[0]
@@ -270,7 +314,3 @@ class Discard(object):
         self.discard = []
         return ret
 
-
-
-
-# Useful functions for later to get neighbors boxes
